@@ -1,0 +1,41 @@
+# az login --use-device-code
+# az account set --subscription b33f0285-db27-4896-ac5c-df22004b0aba
+
+CLIENT=GaaDemoClientApp
+API=GaaDemoApi
+API_ID="app://83b9896d-a821-4676-a88e-3d2dfadfbdda"
+
+# Cleanup first, just to make sure we are starting on a clean slate
+./delete-aad-appreg.sh -d $CLIENT
+./delete-aad-appreg.sh -d $API
+
+# Create AAD client app with SPA redirect URI (standard Angular dev server port)
+./create-aad-appreg.sh -d $CLIENT -r http://localhost:4200
+
+# Add service principal
+./create-aad-appreg.sh -d $CLIENT -r http://localhost:4200 -p
+
+# Create app registration for web API
+./create-aad-appreg.sh -d $API
+
+# Add API identifier
+./create-aad-appreg.sh -d $API -i $API_ID
+
+# Add scopes
+./create-aad-appreg.sh -d $API -i $API_ID -o -p
+
+# Add permissions to client
+MS_GRAPH="00000003-0000-0000-c000-000000000000"
+USER_READ=$(az ad sp show --id $MS_GRAPH | jq '.oauth2Permissions[] | select(.value == "User.Read") | .id' -r)
+USER_READ_ALL=$(az ad sp show --id $MS_GRAPH | jq '.oauth2Permissions[] | select(.value == "User.Read.All") | .id' -r)
+
+API=a9bed9f5-a7d3-488e-a24c-e13a5853fb59
+API_READ=$(az ad sp show --id $API | jq '.oauth2Permissions[] | select(.value == "Read") | .id' -r)
+API_WRITE=$(az ad sp show --id $API | jq '.oauth2Permissions[] | select(.value == "Write") | .id' -r)
+
+CLIENT_ID=be0a9829-7e11-4241-88e4-f714bf2becc3
+az ad app permission add --id $CLIENT_ID --api $MS_GRAPH --api-permissions $USER_READ=Scope $USER_READ_ALL=Scope
+az ad app permission grant --id $CLIENT_ID --api $MS_GRAPH
+
+az ad app permission add --id $CLIENT_ID --api $API --api-permissions $API_READ=Scope $API_WRITE=Scope
+az ad app permission grant --id $CLIENT_ID --api $API
