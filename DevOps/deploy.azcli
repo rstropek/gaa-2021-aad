@@ -15,6 +15,9 @@ API_ID="app://83b9896d-a821-4676-a88e-3d2dfadfbdda"
 # Add service principal
 ./create-aad-appreg.sh -d $CLIENT -r http://localhost:4200 -p
 
+# Add Postman web callback URI and client secret
+./create-aad-appreg.sh -d $CLIENT -r http://localhost:4200 -p -m -c
+
 # Create app registration for web API
 ./create-aad-appreg.sh -d $API
 
@@ -29,11 +32,11 @@ MS_GRAPH="00000003-0000-0000-c000-000000000000"
 USER_READ=$(az ad sp show --id $MS_GRAPH | jq '.oauth2Permissions[] | select(.value == "User.Read") | .id' -r)
 USER_READ_ALL=$(az ad sp show --id $MS_GRAPH | jq '.oauth2Permissions[] | select(.value == "User.Read.All") | .id' -r)
 
-API=a9bed9f5-a7d3-488e-a24c-e13a5853fb59
+API=fa0edd68-c5ca-432d-80dc-62cd1c59d3f0
 API_READ=$(az ad sp show --id $API | jq '.oauth2Permissions[] | select(.value == "Read") | .id' -r)
 API_WRITE=$(az ad sp show --id $API | jq '.oauth2Permissions[] | select(.value == "Write") | .id' -r)
 
-CLIENT_ID=be0a9829-7e11-4241-88e4-f714bf2becc3
+CLIENT_ID=6eab7245-5953-4ef2-a7b3-14a378f14f71
 az ad app permission add --id $CLIENT_ID --api $MS_GRAPH --api-permissions $USER_READ=Scope $USER_READ_ALL=Scope
 az ad app permission grant --id $CLIENT_ID --api $MS_GRAPH
 
