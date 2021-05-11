@@ -17,6 +17,8 @@ API_ID="app://83b9896d-a821-4676-a88e-3d2dfadfbdda"
 
 # Add Postman web callback URI and client secret
 ./create-aad-appreg.sh -d $CLIENT -r http://localhost:4200 -p -m -c
+CLIENT_REG=$(./create-aad-appreg.sh -d $CLIENT -r http://localhost:4200 -p -m -c -s)
+CLIENT_APP_ID=$(echo $CLIENT_REG | jq .appId -r)
 
 # Create app registration for web API
 ./create-aad-appreg.sh -d $API
@@ -26,19 +28,19 @@ API_ID="app://83b9896d-a821-4676-a88e-3d2dfadfbdda"
 
 # Add scopes
 ./create-aad-appreg.sh -d $API -i $API_ID -o -p
+API_REG=$(./create-aad-appreg.sh -d $API -i $API_ID -o -p -s)
+API_APP_ID=$(echo $API_REG | jq .appId -r)
 
 # Add permissions to client
 MS_GRAPH="00000003-0000-0000-c000-000000000000"
 USER_READ=$(az ad sp show --id $MS_GRAPH | jq '.oauth2Permissions[] | select(.value == "User.Read") | .id' -r)
 USER_READ_ALL=$(az ad sp show --id $MS_GRAPH | jq '.oauth2Permissions[] | select(.value == "User.Read.All") | .id' -r)
 
-API=fa0edd68-c5ca-432d-80dc-62cd1c59d3f0
-API_READ=$(az ad sp show --id $API | jq '.oauth2Permissions[] | select(.value == "Read") | .id' -r)
-API_WRITE=$(az ad sp show --id $API | jq '.oauth2Permissions[] | select(.value == "Write") | .id' -r)
+API_READ=$(az ad sp show --id $API_APP_ID | jq '.oauth2Permissions[] | select(.value == "Read") | .id' -r)
+API_WRITE=$(az ad sp show --id $API_APP_ID | jq '.oauth2Permissions[] | select(.value == "Write") | .id' -r)
 
-CLIENT_ID=6eab7245-5953-4ef2-a7b3-14a378f14f71
-az ad app permission add --id $CLIENT_ID --api $MS_GRAPH --api-permissions $USER_READ=Scope $USER_READ_ALL=Scope
-az ad app permission grant --id $CLIENT_ID --api $MS_GRAPH
+az ad app permission add --id $CLIENT_APP_ID --api $MS_GRAPH --api-permissions $USER_READ=Scope $USER_READ_ALL=Scope
+az ad app permission grant --id $CLIENT_APP_ID --api $MS_GRAPH
 
-az ad app permission add --id $CLIENT_ID --api $API --api-permissions $API_READ=Scope $API_WRITE=Scope
-az ad app permission grant --id $CLIENT_ID --api $API
+az ad app permission add --id $CLIENT_APP_ID --api $API_APP_ID --api-permissions $API_READ=Scope $API_WRITE=Scope
+az ad app permission grant --id $CLIENT_APP_ID --api $API_APP_ID
